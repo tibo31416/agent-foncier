@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Foncier</title>
+<style>
+/* ── System font stack Apple-style ─────────────────────────────── */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  --mono: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
+
+  /* Palette */
+  --white:    #ffffff;
+  --bg:       #f5f5f7;
+  --surface:  #ffffff;
+  --border:   #d2d2d7;
+  --border-l: #e5e5ea;
+  --txt:      #1d1d1f;
+  --txt2:     #6e6e73;
+  --txt3:     #aeaeb2;
+  --blue:     #0071e3;
+  --blue-l:   rgba(0,113,227,.08);
+  --blue-bdr: rgba(0,113,227,.18);
+  --green:    #34c759;
+  --green-l:  rgba(52,199,89,.08);
+  --green-bdr:rgba(52,199,89,.2);
+  --red:      #ff3b30;
+  --red-l:    rgba(255,59,48,.07);
+  --red-bdr:  rgba(255,59,48,.18);
+  --amber:    #ff9500;
+  --amber-l:  rgba(255,149,0,.08);
+  --amber-bdr:rgba(255,149,0,.22);
+  --r:        12px;
+  --r-sm:     8px;
+  --r-lg:     18px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--txt);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 52px 20px 80px;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+header {
+  margin-bottom: 44px;
+}
+
+.wordmark {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--txt3);
+  margin-bottom: 8px;
+}
+
+h1 {
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--txt);
+  line-height: 1.1;
+}
+
+.header-sub {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--txt2);
+  font-weight: 400;
+}
+
+/* ── Form card ──────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-l);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+}
+
+.form-card {
+  padding: 28px;
+  margin-bottom: 12px;
+}
+
+/* ── Fields ─────────────────────────────────────────────────────── */
+.fields-row {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 580px) {
+  .fields-row { grid-template-columns: 1fr 1fr; }
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--txt2);
+}
+
+input {
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 400;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  color: var(--txt);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  width: 100%;
+  appearance: none;
+}
+input:focus {
+  outline: none;
+  background: var(--white);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-l);
+}
+input::placeholder { color: var(--txt3); }
+
+.hint {
+  font-size: 12px;
+  color: var(--txt3);
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-l);
+  line-height: 1.5;
+}
+
+/* ── Button ─────────────────────────────────────────────────────── */
+.btn-row {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 980px;
+  border: none;
+  cursor: pointer;
+  transition: opacity .12s, transform .1s;
+  letter-spacing: -.01em;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* ── Loader ─────────────────────────────────────────────────────── */
+.loader {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--txt2);
+}
+.loader.active { display: flex; }
+
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Steps ──────────────────────────────────────────────────────── */
+.steps {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 16px;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-l);
+  overflow: hidden;
+}
+.steps.active { display: flex; }
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  padding: 9px 14px;
+  transition: background .15s, color .15s;
+  border-bottom: 1px solid var(--border-l);
+}
+.step:last-child { border-bottom: none; }
+
+.step.waiting { color: var(--txt3); background: transparent; }
+.step.running { color: var(--txt); background: var(--blue-l); }
+.step.done    { color: var(--green); background: var(--green-l); }
+.step.error   { color: var(--txt2); background: transparent; }
+
+.step-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.step.waiting .step-dot { background: var(--border); }
+.step.running .step-dot { background: var(--blue); animation: pulse 1s ease infinite; }
+.step.done    .step-dot { background: var(--green); }
+.step.error   .step-dot { background: var(--txt3); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ── Error ──────────────────────────────────────────────────────── */
+.error-box {
+  display: none;
+  margin-top: 12px;
+  padding: 11px 14px;
+  background: var(--red-l);
+  border: 1px solid var(--red-bdr);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  color: var(--red);
+}
+.error-box.active { display: block; }
+
+/* ── Ambiguïté ──────────────────────────────────────────────────── */
+.ambigue-box {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.ambigue-box.active { display: flex; }
+
+.ambigue-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--amber);
+}
+
+.ambigue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color .12s, background .12s;
+}
+.ambigue-item:hover {
+  border-color: var(--blue);
+  background: var(--blue-l);
+}
+.ambigue-item strong { font-weight: 600; }
+.ambigue-meta { font-size: 12px; color: var(--txt3); }
+
+/* ── Section header ─────────────────────────────────────────────── */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 32px 0 12px;
+}
+.section-num {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--txt3);
+  background: var(--border-l);
+  border-radius: 4px;
+  padding: 2px 7px;
+  letter-spacing: .03em;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--txt2);
+}
+
+/* ── Results ────────────────────────────────────────────────────── */
+#results { display: none; }
+#results.active { display: block; }
+
+/* ── Stat grid ──────────────────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1px;
+  background: var(--border-l);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-l);
+}
+
+.stat-cell {
+  background: var(--surface);
+  padding: 16px 18px;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--txt3);
+  letter-spacing: .02em;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  color: var(--txt);
+  line-height: 1;
+}
+.stat-value.sm { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+.stat-unit {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--txt2);
+  margin-left: 2px;
+}
+.stat-sub {
+  font-size: 11px;
+  color: var(--txt3);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Bâtiment card ──────────────────────────────────────────────── */
+.bat-card {
+  padding: 20px 22px;
+  margin-bottom: 12px;
+}
+
+/* ── Technique card ─────────────────────────────────────────────── */
+.technique-card {
+  padding: 0;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.technique-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-l);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.technique-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--txt);
+}
+
+.alertes-list {
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.alerte-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+}
+.alerte-item.rouge { background: var(--red-l);   color: #c0392b; border: 1px solid var(--red-bdr); }
+.alerte-item.amber { background: var(--amber-l); color: #8a4d00; border: 1px solid var(--amber-bdr); }
+.alerte-item.ok    { background: var(--green-l); color: #1a7a3a; border: 1px solid var(--green-bdr); }
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border-l);
+  border-top: 1px solid var(--border-l);
+}
+@media(max-width:580px) { .tech-grid { grid-template-columns: 1fr 1fr; } }
+
+.tech-cell {
+  background: var(--surface);
+  padding: 14px 16px;
+}
+.tech-cell-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--txt3);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.tech-cell-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--txt);
+  line-height: 1.4;
+}
+.tech-cell-value.ok    { color: var(--green); }
+.tech-cell-value.warn  { color: var(--amber); }
+.tech-cell-value.alert { color: var(--red); }
+.tech-cell-value.dim   { color: var(--txt3); }
+
+/* ── PLU block ──────────────────────────────────────────────────── */
+.plu-card {
+  padding: 0;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.plu-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-l);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plu-zone-badge {
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--txt);
+  color: var(--white);
+  border-radius: 6px;
+  padding: 3px 10px;
+  letter-spacing: .02em;
+}
+
+.plu-destination {
+  font-size: 13px;
+  color: var(--txt2);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-link {
+  font-size: 12px;
+  color: var(--blue);
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pdf-link:hover { opacity: .72; }
+
+/* Score row */
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-l);
+}
+
+.score-ring {
+  position: relative;
+  width: 58px; height: 58px;
+  flex-shrink: 0;
+}
+.score-ring svg {
+  width: 58px; height: 58px;
+  transform: rotate(-90deg);
+}
+.score-ring-bg { fill: none; stroke: var(--border-l); stroke-width: 4; }
+.score-ring-fill { fill: none; stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset .6s ease; }
+.score-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--txt);
+}
+.score-comment {
+  font-size: 13px;
+  color: var(--txt2);
+  line-height: 1.5;
+  flex: 1;
+}
+.score-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--txt3);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+/* Analyse grid */
+.analyse-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--border-l);
+  gap: 1px;
+}
+@media(max-width:580px) { .analyse-grid { grid-template-columns: 1fr; } }
+
+.analyse-cell {
+  background: var(--surface);
+  padding: 16px 20px;
+}
+.analyse-cell-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--txt3);
+  margin-bottom: 8px;
+}
+.analyse-cell-body {
+  font-size: 13px;
+  color: var(--txt);
+  line-height: 1.55;
+}
+.analyse-cell-body.dim { color: var(--txt2); }
+
+/* Tags */
+.tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 980px;
+  border: 1px solid var(--border);
+  color: var(--txt2);
+  background: var(--bg);
+  white-space: nowrap;
+}
+.tag.green { background: var(--green-l); border-color: var(--green-bdr); color: #1a7a3a; }
+.tag.red   { background: var(--red-l);   border-color: var(--red-bdr);   color: #c0392b; }
+.tag.amber { background: var(--amber-l); border-color: var(--amber-bdr); color: #7a4500; }
+
+/* Attention items */
+.attention-block {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-l);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.attention-item {
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--amber-l);
+  border: 1px solid var(--amber-bdr);
+  color: #7a4500;
+}
+
+/* Contraintes techniques */
+.contraintes-block {
+  border-top: 1px solid var(--border-l);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--border-l);
+  gap: 1px;
+}
+@media(max-width:580px) { .contraintes-block { grid-template-columns: 1fr; } }
+
+/* ── Tags mini ──────────────────────────────────────────────────── */
+.pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 980px;
+  color: var(--txt2);
+  background: var(--bg);
+  border: 1px solid var(--border-l);
+}
+.pill.blue  { background: var(--blue-l);  border-color: var(--blue-bdr);  color: var(--blue); }
+.pill.green { background: var(--green-l); border-color: var(--green-bdr); color: #1a7a3a; }
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+footer {
+  margin-top: 48px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-l);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--txt3);
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeUp .3s ease both; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Header ───────────────────────────────────────────────── -->
+  <header>
+    <div class="wordmark">Outil d'analyse foncière</div>
+    <h1>Agent Foncier</h1>
+    <div class="header-sub">Analyse automatisée des parcelles — PLU, bâti, risques, servitudes</div>
+  </header>
+
+  <!-- ── Formulaire ───────────────────────────────────────────── -->
+  <div class="card form-card">
+    <div class="fields-row">
+      <div class="field-group">
+        <label>Code INSEE</label>
+        <input id="f-insee" type="text" placeholder="75056" maxlength="5" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label>Section</label>
+        <input id="f-section" type="text" placeholder="DW" maxlength="2" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label>Numéro</label>
+        <input id="f-numero" type="text" placeholder="0241" maxlength="4" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label>Com. abs.</label>
+        <input id="f-comabs" type="text" placeholder="000" maxlength="3" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="hint">Paris 13e : 75056 · DW · 0241 · 000 &nbsp;—&nbsp; Toulouse : 31555 · AC · 0064 · 823</div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-analyse" onclick="lancer()">Analyser</button>
+      <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <span id="loader-text">Chargement…</span>
+      </div>
+    </div>
+
+    <!-- Étapes -->
+    <div class="steps" id="steps">
+      <div class="step waiting" id="step-1"><div class="step-dot"></div><span>Identification parcelle — IGN Cadastre</span></div>
+      <div class="step waiting" id="step-2"><div class="step-dot"></div><span>Zone PLU &amp; règlement — Géoportail Urbanisme</span></div>
+      <div class="step waiting" id="step-3"><div class="step-dot"></div><span>Bâtiment existant — BDNB</span></div>
+      <div class="step waiting" id="step-4"><div class="step-dot"></div><span>Analyse technique — Géorisques, SUP, Natura 2000</span></div>
+      <div class="step waiting" id="step-5"><div class="step-dot"></div><span>Analyse IA du règlement PLU — Claude</span></div>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+
+    <!-- Ambiguïté -->
+    <div class="ambigue-box" id="ambigue-box">
+      <div class="ambigue-label">Plusieurs parcelles trouvées — sélectionnez :</div>
+    </div>
+  </div>
+
+  <!-- ── Résultats ─────────────────────────────────────────────── -->
+  <div id="results">
+
+    <!-- Parcelle -->
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <span class="section-title">Parcelle identifiée</span>
+    </div>
+    <div class="card">
+      <div class="stat-grid" id="grid-parcelle"></div>
+    </div>
+
+    <!-- Bâtiment -->
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <span class="section-title">Bâtiment existant</span>
+    </div>
+    <div class="card bat-card" id="bat-card"></div>
+
+    <!-- Analyse technique -->
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <span class="section-title">Analyse technique</span>
+    </div>
+    <div class="card technique-card" id="technique-card"></div>
+
+    <!-- PLU & Analyse IA -->
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <span class="section-title">Règlement PLU &amp; analyse IA</span>
+    </div>
+    <div class="card plu-card" id="plu-block"></div>
+
+  </div>
+
+  <footer>
+    <span>IGN Cadastre · GPU · BDNB · Géorisques · Anthropic Claude</span>
+    <span>Open data — usage non officiel</span>
+  </footer>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// CONFIG — remplace par ton URL Railway
+// ════════════════════════════════════════════════════════
+const BACKEND = "https://TON-PROJET.up.railway.app";
+
+// ════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════
+let currentParcelle  = null;
+let currentBatiment  = null;
+let currentTechnique = null;
+
+// ════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const val = id => $(id).value.trim();
+
+function setStep(n, state) {
+  const el = $(`step-${n}`);
+  if (el) el.className = `step ${state}`;
+}
+
+function setLoading(active, text = "") {
+  const loader = $("loader");
+  const btn    = $("btn-analyse");
+  const steps  = $("steps");
+  loader.classList.toggle("active", active);
+  steps.classList.toggle("active", true);  // reste visible
+  btn.disabled = active;
+  if (text) $("loader-text").textContent = text;
+}
+
+function showError(msg) {
+  const el = $("error-box");
+  el.textContent = msg;
+  el.classList.add("active");
+}
+function clearError() {
+  $("error-box").textContent = "";
+  $("error-box").classList.remove("active");
+}
+
+async function apiFetch(route, body) {
+  const r = await fetch(BACKEND + route, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || `Erreur HTTP ${r.status}`);
+  return data;
+}
+
+function esc(s) {
+  if (!s) return "";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ════════════════════════════════════════════════════════
+// CENTROÏDE PARCELLE (premier point du polygone)
+// ════════════════════════════════════════════════════════
+function getCentroid(geom) {
+  try {
+    const coords = geom.type === "Polygon"
+      ? geom.coordinates[0]
+      : geom.coordinates[0][0];
+    let lon = 0, lat = 0;
+    coords.forEach(([x, y]) => { lon += x; lat += y; });
+    return { lon: lon / coords.length, lat: lat / coords.length };
+  } catch {
+    return null;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// LANCER L'ANALYSE
+// ════════════════════════════════════════════════════════
+async function lancer(overrideComAbs = null) {
+  clearError();
+  $("ambigue-box").classList.remove("active");
+  $("ambigue-box").innerHTML = '<div class="ambigue-label">Plusieurs parcelles trouvées — sélectionnez :</div>';
+  $("results").classList.remove("active");
+  [1,2,3,4,5].forEach(n => setStep(n, "waiting"));
+
+  const code_insee = val("f-insee");
+  const section    = val("f-section").toUpperCase();
+  const numero     = val("f-numero").padStart(4, "0");
+  const com_abs    = overrideComAbs ?? val("f-comabs").padStart(3, "0");
+
+  if (!code_insee || !section || !numero) {
+    showError("Remplissez le code INSEE, la section et le numéro.");
+    return;
+  }
+
+  setLoading(true, "Identification de la parcelle…");
+  setStep(1, "running");
+
+  try {
+
+    // ── 1. Parcelle ─────────────────────────────────────
+    const parcelle = await apiFetch("/parcelle", { code_insee, section, numero, com_abs });
+
+    if (parcelle.status === "ambigue") {
+      setStep(1, "error");
+      setLoading(false);
+      const box = $("ambigue-box");
+      box.classList.add("active");
+      parcelle.choix.forEach(c => {
+        const div = document.createElement("div");
+        div.className = "ambigue-item";
+        div.innerHTML = `<span><strong>${esc(c.idu)}</strong> — ${esc(c.commune)}</span><span class="ambigue-meta">${c.surface} m² · com_abs ${c.com_abs}</span>`;
+        div.onclick = () => { $("f-comabs").value = c.com_abs; lancer(c.com_abs); };
+        box.appendChild(div);
+      });
+      return;
+    }
+
+    setStep(1, "done");
+    currentParcelle = parcelle;
+
+    // ── 2. PLU (déjà fait dans /parcelle) ───────────────
+    setStep(2, parcelle.plu?.pdf_url ? "done" : "error");
+
+    // ── 3. Bâtiment BDNB ────────────────────────────────
+    setStep(3, "running");
+    setLoading(true, "Données bâtiment (BDNB)…");
+
+    let batiment = { status: "not_found" };
+    try {
+      batiment = await apiFetch("/batiment", { idu: parcelle.idu });
+    } catch (e) { console.warn("BDNB:", e); }
+    currentBatiment = batiment;
+    setStep(3, batiment.status === "ok" ? "done" : "error");
+
+    // ── 4. Analyse technique (16 APIs) ──────────────────
+    setStep(4, "running");
+    setLoading(true, "Analyse technique — Géorisques, servitudes, environnement…");
+
+    let technique = {};
+    try {
+      const centroid = getCentroid(parcelle.geometrie);
+      if (centroid) {
+        technique = await apiFetch("/technique", {
+          idu:        parcelle.idu,
+          lon:        centroid.lon,
+          lat:        centroid.lat,
+          code_insee: parcelle.code_commune,
+          geom:       parcelle.geometrie,
+        });
+      }
+    } catch (e) { console.warn("Technique:", e); }
+    currentTechnique = technique;
+    setStep(4, "done");
+
+    // ── 5. Analyse Claude ────────────────────────────────
+    if (!parcelle.plu?.pdf_url) {
+      showError("Aucun règlement PLU trouvé pour cette parcelle.");
+      setLoading(false);
+      renderAll(parcelle, batiment, technique, null);
+      $("results").classList.add("active");
+      return;
+    }
+
+    setStep(5, "running");
+    setLoading(true, "Claude lit le règlement PLU…");
+
+    const analyse = await apiFetch("/analyse", {
+      pdf_url:          parcelle.plu.pdf_url,
+      idu:              parcelle.idu,
+      surface_parcelle: parcelle.surface_parcelle,
+      zone_plu:         parcelle.plu.zone || "?",
+      commune:          parcelle.commune,
+      batiment:         batiment,
+      technique:        technique,
+    });
+
+    setStep(5, "done");
+    setLoading(false);
+
+    renderAll(parcelle, batiment, technique, analyse);
+    $("results").classList.add("active");
+    $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+
+  } catch (err) {
+    setLoading(false);
+    showError("Erreur : " + err.message);
+    [1,2,3,4,5].forEach(n => {
+      const el = $(`step-${n}`);
+      if (el?.classList.contains("running")) setStep(n, "error");
+    });
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER TOUTES LES SECTIONS
+// ════════════════════════════════════════════════════════
+function renderAll(parcelle, batiment, technique, analyse) {
+  renderParcelle(parcelle);
+  renderBatiment(batiment);
+  renderTechnique(technique);
+  if (analyse) renderAnalyse(parcelle, analyse);
+}
+
+// ── PARCELLE ─────────────────────────────────────────────────────
+function renderParcelle(p) {
+  $("grid-parcelle").innerHTML = [
+    { label: "IDU",             value: `<span class="stat-value sm">${esc(p.idu)}</span>`,                                    sub: esc(p.commune) },
+    { label: "Surface",         value: `<span class="stat-value">${p.surface_parcelle}<span class="stat-unit">m²</span></span>`, sub: "Cadastre IGN" },
+    { label: "Zone PLU",        value: `<span class="stat-value sm">${esc(p.plu?.zone || "—")}</span>`,                       sub: esc(p.plu?.type_document || "") + " " + esc(p.plu?.nom_document || "") },
+    { label: "Type",            value: `<span class="stat-value sm">${esc(p.plu?.type_zone || "—")}</span>`,                   sub: esc((p.plu?.libelle_zone || "").substring(0, 55)) },
+  ].map(c => `
+    <div class="stat-cell">
+      <div class="stat-label">${c.label}</div>
+      ${c.value}
+      <div class="stat-sub">${c.sub || "&nbsp;"}</div>
+    </div>
+  `).join("");
+}
+
+// ── BÂTIMENT ─────────────────────────────────────────────────────
+function renderBatiment(b) {
+  const card = $("bat-card");
+  if (b.status !== "ok") {
+    card.innerHTML = `<p style="font-size:13px;color:var(--txt3)">Aucune donnée bâtiment dans la BDNB — parcelle peut-être non bâtie.</p>`;
+    return;
+  }
+
+  const stats = [
+    b.surface_au_sol    != null ? `<div class="stat-cell"><div class="stat-label">Surface au sol</div><div class="stat-value">${b.surface_au_sol}<span class="stat-unit">m²</span></div></div>` : "",
+    b.nb_niveaux        != null ? `<div class="stat-cell"><div class="stat-label">Niveaux</div><div class="stat-value">${b.nb_niveaux}</div></div>` : "",
+    b.annee_construction!= null ? `<div class="stat-cell"><div class="stat-label">Année</div><div class="stat-value">${b.annee_construction}</div></div>` : "",
+    b.nb_logements      != null ? `<div class="stat-cell"><div class="stat-label">Logements</div><div class="stat-value">${b.nb_logements}</div></div>` : "",
+    b.classe_dpe        != null ? `<div class="stat-cell"><div class="stat-label">DPE</div><div class="stat-value sm">${esc(b.classe_dpe)}</div></div>` : "",
+  ].filter(Boolean).join("");
+
+  const tags = [
+    b.usage        ? `<span class="tag">${esc(b.usage)}</span>` : "",
+    b.materiaux_mur? `<span class="tag">Murs : ${esc(b.materiaux_mur)}</span>` : "",
+    b.materiaux_toit?`<span class="tag">Toit : ${esc(b.materiaux_toit)}</span>` : "",
+  ].filter(Boolean).join("");
+
+  card.innerHTML = `
+    <div class="stat-grid" style="border-radius:8px;margin-bottom:${tags||b.adresse?'12px':'0'}">${stats}</div>
+    ${tags ? `<div class="tag-row">${tags}</div>` : ""}
+    ${b.adresse ? `<div style="margin-top:10px;font-size:12px;color:var(--txt3)">${esc(b.adresse)}</div>` : ""}
+  `;
+}
+
+// ── TECHNIQUE ────────────────────────────────────────────────────
+function renderTechnique(t) {
+  const card = $("technique-card");
+  if (!t || t.status !== "ok") {
+    card.innerHTML = `<div style="padding:18px 20px;font-size:13px;color:var(--txt3)">Données techniques non disponibles.</div>`;
+    return;
+  }
+
+  const sol  = t.sol  || {};
+  const risq = t.risques || {};
+  const serv = t.servitudes || {};
+  const envi = t.environnement || {};
+  const accs = t.acces || {};
+  const com  = t.commune || {};
+
+  // Alertes
+  const alertes = [];
+  if (risq.zone_inondable)
+    alertes.push({ cls: "rouge", txt: "Zone inondable détectée (AZI/PPRI) — peut bloquer le permis de construire" });
+  (serv.abf || []).forEach(s =>
+    alertes.push({ cls: "amber", txt: `Périmètre ABF : ${s.nom || s.suptype} → +3 à 6 mois de délai pour le PC, contraintes esthétiques` }));
+  (serv.carrieres || []).forEach(s =>
+    alertes.push({ cls: "amber", txt: `Risque minier / carrières (${s.suptype?.toUpperCase()}) → étude géotechnique obligatoire` }));
+  if (sol.nb_cavites > 0)
+    alertes.push({ cls: "amber", txt: `${sol.nb_cavites} cavité(s) souterraine(s) dans un rayon 1 km` });
+  if (sol.nb_mvt > 0)
+    alertes.push({ cls: "amber", txt: `${sol.nb_mvt} mouvement(s) de terrain historique(s) recensé(s)` });
+  if (sol.alea_argiles && ["fort","très fort","moyen"].includes((sol.alea_argiles||"").toLowerCase()))
+    alertes.push({ cls: "amber", txt: `Aléa argiles ${sol.alea_argiles} → fondations renforcées, surcoût estimé +5k€ à +50k€` });
+  if (envi.nb_natura > 0)
+    alertes.push({ cls: "amber", txt: `${envi.nb_natura} site(s) Natura 2000 → Évaluation des Incidences obligatoire` });
+  (serv.reseaux || []).forEach(s =>
+    alertes.push({ cls: "amber", txt: `Réseau souterrain/aérien : ${s.suptype?.toUpperCase()} — ${s.nom}` }));
+  if (alertes.length === 0)
+    alertes.push({ cls: "ok", txt: "Aucune alerte critique détectée" });
+
+  // Prescriptions PLU
+  const prescList = (serv.prescriptions_plu || []).slice(0, 4);
+
+  // Densité commune
+  const densite = com.population && com.surface
+    ? Math.round(com.population / (com.surface / 100))
+    : null;
+
+  card.innerHTML = `
+    <div class="technique-header">
+      <span class="technique-title">Analyse technique</span>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${risq.sismicite ? `<span class="pill">${esc(risq.sismicite)}</span>` : ""}
+        ${com.nom ? `<span class="pill blue">${esc(com.nom)}</span>` : ""}
+      </div>
+    </div>
+
+    <div class="alertes-list">
+      ${alertes.map(a => `<div class="alerte-item ${a.cls}">${esc(a.txt)}</div>`).join("")}
+    </div>
+
+    <div class="tech-grid">
+      <div class="tech-cell">
+        <div class="tech-cell-label">Aléa argiles</div>
+        <div class="tech-cell-value ${colorArgiles(sol.alea_argiles)}">${esc(sol.alea_argiles) || "—"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Radon</div>
+        <div class="tech-cell-value">${sol.radon_categorie ? `Catégorie ${esc(sol.radon_categorie)}` : "—"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Cavités (1 km)</div>
+        <div class="tech-cell-value ${sol.nb_cavites > 0 ? 'warn' : 'ok'}">${sol.nb_cavites ?? "—"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">MVT terrain</div>
+        <div class="tech-cell-value ${sol.nb_mvt > 0 ? 'warn' : 'ok'}">${sol.nb_mvt ?? "—"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">ICPE dans 500 m</div>
+        <div class="tech-cell-value">${risq.icpe_nb ?? "—"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Risques commune</div>
+        <div class="tech-cell-value" style="font-size:11px">${(risq.liste_naturels || []).join(", ") || "Aucun"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Servitudes ABF</div>
+        <div class="tech-cell-value ${serv.nb_abf > 0 ? 'warn' : 'ok'}">${serv.nb_abf ?? "—"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Prescriptions PLU</div>
+        <div class="tech-cell-value" style="font-size:11px">${prescList.length ? esc(prescList.join(", ")) : "—"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Voie d'accès</div>
+        <div class="tech-cell-value" style="font-size:11px">${esc(accs.voie) || "—"} ${accs.type_voie ? `<span class="pill">${esc(accs.type_voie)}</span>` : ""}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Natura 2000 / ZNIEFF</div>
+        <div class="tech-cell-value ${envi.nb_natura > 0 || envi.nb_znieff > 0 ? 'warn' : 'ok'}">${envi.nb_natura ?? 0} / ${envi.nb_znieff ?? 0}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Population commune</div>
+        <div class="tech-cell-value">${com.population ? com.population.toLocaleString("fr-FR") : "—"}</div>
+      </div>
+      <div class="tech-cell">
+        <div class="tech-cell-label">Densité</div>
+        <div class="tech-cell-value">${densite ? densite.toLocaleString("fr-FR") + " hab/km²" : "—"}</div>
+      </div>
+    </div>
+  `;
+}
+
+function colorArgiles(v) {
+  if (!v) return "dim";
+  const low = v.toLowerCase();
+  if (low.includes("très fort") || low.includes("fort")) return "alert";
+  if (low.includes("moyen")) return "warn";
+  return "ok";
+}
+
+// ── ANALYSE PLU ──────────────────────────────────────────────────
+function renderAnalyse(p, result) {
+  const block = $("plu-block");
+  const a     = result?.analyse || {};
+  const score = Math.min(100, Math.max(0, a.opportunite_promoteur?.score || 0));
+  const ct    = a.contraintes_techniques || {};
+
+  // Score ring
+  const r = 24, circ = 2 * Math.PI * r;
+  const dash = circ * score / 100;
+  const scoreColor = score >= 65 ? "#34c759" : score >= 40 ? "#ff9500" : "#ff3b30";
+
+  // PDF link
+  const pdfLink = p.plu?.pdf_url
+    ? `<a href="${p.plu.pdf_url}" target="_blank" class="pdf-link">↗ Règlement PDF</a>`
+    : "";
+
+  // Tags
+  const tagsOk = (a.ce_qui_est_autorise || []).map(t => `<span class="tag green">${esc(t)}</span>`).join("");
+  const tagsNo = (a.ce_qui_est_interdit || []).map(t => `<span class="tag red">${esc(t)}</span>`).join("");
+
+  // Points attention
+  const pts = (a.points_attention || []).map(pt => `<div class="attention-item">${esc(pt)}</div>`).join("");
+
+  // Contraintes techniques
+  const blocksBloquants = (ct.points_bloquants || []).map(b => `<div class="attention-item">${esc(b)}</div>`).join("");
+
+  block.innerHTML = `
+    <div class="plu-header">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+        <span class="plu-zone-badge">Zone ${esc(a.zone || p.plu?.zone || "?")}</span>
+        <span class="plu-destination">${esc(a.destination_principale || "")}</span>
+      </div>
+      ${pdfLink}
+    </div>
+
+    <div class="score-row">
+      <div class="score-ring">
+        <svg viewBox="0 0 58 58">
+          <circle class="score-ring-bg" cx="29" cy="29" r="${r}"/>
+          <circle class="score-ring-fill"
+            cx="29" cy="29" r="${r}"
+            stroke="${scoreColor}"
+            stroke-dasharray="${dash} ${circ}"
+            stroke-dashoffset="0"/>
+        </svg>
+        <div class="score-num">${score}</div>
+      </div>
+      <div>
+        <div class="score-label">Score opportunité</div>
+        <div class="score-comment">${esc(a.opportunite_promoteur?.commentaire || "—")}</div>
+      </div>
+    </div>
+
+    <div class="analyse-grid">
+      <div class="analyse-cell">
+        <div class="analyse-cell-title">Usages autorisés</div>
+        <div class="tag-row">${tagsOk || "<span class='tag'>—</span>"}</div>
+      </div>
+      <div class="analyse-cell">
+        <div class="analyse-cell-title">Interdictions</div>
+        <div class="tag-row">${tagsNo || "<span class='tag'>—</span>"}</div>
+      </div>
+      <div class="analyse-cell">
+        <div class="analyse-cell-title">Hauteur</div>
+        <div class="analyse-cell-body">
+          ${a.regles_hauteur?.hauteur_max ? `<strong>${esc(a.regles_hauteur.hauteur_max)}</strong> max<br>` : ""}
+          <span style="color:var(--txt2);font-size:12px">${esc(a.regles_hauteur?.regles_specifiques || "—")}</span>
+        </div>
+      </div>
+      <div class="analyse-cell">
+        <div class="analyse-cell-title">Implantation</div>
+        <div class="analyse-cell-body dim" style="font-size:12px">
+          ${a.regles_implantation?.retrait_rue     ? `Rue : ${esc(a.regles_implantation.retrait_rue)}<br>` : ""}
+          ${a.regles_implantation?.retrait_limites ? `Limites : ${esc(a.regles_implantation.retrait_limites)}<br>` : ""}
+          ${a.regles_implantation?.emprise_sol_max ? `Emprise max : ${esc(a.regles_implantation.emprise_sol_max)}` : "—"}
+        </div>
+      </div>
+      <div class="analyse-cell">
+        <div class="analyse-cell-title">Surface constructible</div>
+        <div class="analyse-cell-body">
+          ${a.surface_constructible?.shon_estimee
+            ? `<strong style="font-size:18px;letter-spacing:-.03em">${esc(a.surface_constructible.shon_estimee)}</strong><br>` : ""}
+          <span style="font-size:12px;color:var(--txt2)">
+            ${a.surface_constructible?.nb_niveaux_max ? `${esc(a.surface_constructible.nb_niveaux_max)} niveaux max · ` : ""}
+            ${esc(a.surface_constructible?.methode_calcul || "")}
+          </span>
+        </div>
+      </div>
+      <div class="analyse-cell">
+        <div class="analyse-cell-title">Stationnement &amp; énergie</div>
+        <div class="analyse-cell-body dim" style="font-size:12px">
+          ${a.stationnement ? esc(a.stationnement) + "<br>" : ""}
+          ${esc(a.performances_energetiques || "—")}
+        </div>
+      </div>
+    </div>
+
+    ${(ct.fondations || ct.delai_pc_estime || ct.surcoût_estime) ? `
+    <div class="contraintes-block">
+      ${ct.fondations ? `<div class="analyse-cell"><div class="analyse-cell-title">Fondations recommandées</div><div class="analyse-cell-body" style="font-size:12px">${esc(ct.fondations)}</div></div>` : ""}
+      ${ct.delai_pc_estime ? `<div class="analyse-cell"><div class="analyse-cell-title">Délai PC estimé</div><div class="analyse-cell-body" style="font-size:12px">${esc(ct.delai_pc_estime)}</div></div>` : ""}
+      ${ct.surcoût_estime || ct["surcoût_estime"] ? `<div class="analyse-cell"><div class="analyse-cell-title">Surcoût estimé</div><div class="analyse-cell-body" style="font-size:12px">${esc(ct.surcoût_estime || ct["surcoût_estime"])}</div></div>` : ""}
+    </div>` : ""}
+
+    ${blocksBloquants ? `<div class="attention-block"><div style="font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px">Points bloquants</div>${blocksBloquants}</div>` : ""}
+
+    ${pts ? `<div class="attention-block"><div style="font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px">Points d'attention</div>${pts}</div>` : ""}
+  `;
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && document.activeElement.tagName === "INPUT") lancer();
+});
+</script>
+</body>
+</html>
