@@ -369,10 +369,6 @@ Si tu ne peux pas accéder au PDF (lien mort, ZIP non lisible), indique-le dans 
         message = client_ai.messages.create(
             model="claude-3-5-sonnet-20241022",
             max_tokens=2000,
-            tools=[{
-                "type": "web_search_20250305",
-                "name": "web_search",
-            }],
             messages=[{"role": "user", "content": prompt}]
         )
 
